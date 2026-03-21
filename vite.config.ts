@@ -12,7 +12,7 @@ export default defineConfig(({ mode }) => {
         name: 'chat',
         filename: 'remoteEntry.js',
         exposes: {
-          './Chatbot': './src/Chatbot',
+          './BookRecommendation': './src/BookRecommendation',
         },
         shared: ['react', 'react-dom'],
       }),
