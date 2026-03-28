@@ -4,6 +4,6 @@ import BookRecommendation from './BookRecommendation'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <BookRecommendation userid={new URLSearchParams(window.location.search).get('userid')} />
+    <BookRecommendation userId={new URLSearchParams(window.location.search).get('userId')} />
   </StrictMode>,
 )

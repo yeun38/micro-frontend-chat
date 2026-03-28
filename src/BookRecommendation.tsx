@@ -3,7 +3,7 @@ import { getBookRecommendation, type Book } from './hooks/gemini.js'
 import './BookRecommendation.css'
 
 interface BookRecommendationProps {
-  userid?: string | null
+  userId?: string | null
   emotions?: string[]
   onBack?: () => void
 }
@@ -16,10 +16,10 @@ type Status =
   | 'done'
   | 'error'
 
-function BookRecommendation({ userid, emotions: initialEmotions = [], onBack }: BookRecommendationProps) {
+function BookRecommendation({ userId, emotions: initialEmotions = [], onBack }: BookRecommendationProps) {
   const hasEmotions = initialEmotions.length > 0
   const [status, setStatus] = useState<Status>(() => {
-    if (!userid) return 'no-access'
+    if (!userId) return 'no-access'
     if (hasEmotions) return 'loading-books'
     return 'loading-store'
   })
@@ -30,7 +30,7 @@ function BookRecommendation({ userid, emotions: initialEmotions = [], onBack }: 
   const [Initializer, setInitializer] = useState<React.ComponentType<any> | null>(null)
 
   useEffect(() => {
-    if (!userid) {
+    if (!userId) {
       setStatus('no-access')
       return
     }
@@ -90,7 +90,7 @@ function BookRecommendation({ userid, emotions: initialEmotions = [], onBack }: 
       mounted = false
       unsubscribe?.()
     }
-  }, [userid])
+  }, [userId])
 
   // 감정 데이터가 준비되면 책 추천 요청
   useEffect(() => {
