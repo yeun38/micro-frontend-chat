@@ -3,27 +3,151 @@ import { getBookRecommendation, type Book } from './hooks/gemini.js'
 import './BookRecommendation.css'
 
 interface BookRecommendationProps {
+  userid?: string | null
   emotions?: string[]
   onBack?: () => void
 }
 
-function BookRecommendation({ emotions = [], onBack }: BookRecommendationProps) {
+type Status =
+  | 'no-access'
+  | 'loading-store'
+  | 'no-emotions'
+  | 'loading-books'
+  | 'done'
+  | 'error'
+
+function BookRecommendation({ userid, emotions: initialEmotions = [], onBack }: BookRecommendationProps) {
+  const hasEmotions = initialEmotions.length > 0
+  const [status, setStatus] = useState<Status>(() => {
+    if (!userid) return 'no-access'
+    if (hasEmotions) return 'loading-books'
+    return 'loading-store'
+  })
+  const [emotions, setEmotions] = useState<string[]>(initialEmotions)
   const [books, setBooks] = useState<Book[]>([])
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [Initializer, setInitializer] = useState<React.ComponentType<any> | null>(null)
 
   useEffect(() => {
-    if (emotions.length === 0) return
-    setLoading(true)
-    setError(null)
+    if (!userid) {
+      setStatus('no-access')
+      return
+    }
+    // shell에서 emotions를 이미 전달받은 경우 store 로딩 불필요
+    if (hasEmotions) return
+
+    let mounted = true
+    let unsubscribe: (() => void) | null = null
+
+    ;(async () => {
+      try {
+        // 1. store import 및 유효성 검사
+        const module = await import('mfeHost/sharedEmotionStore')
+        if (!mounted) return
+
+        const store = module.useSharedEmotionStore
+        if (
+          !store ||
+          typeof store.getState !== 'function' ||
+          typeof store.subscribe !== 'function'
+        ) {
+          throw new Error('sharedEmotionStore가 유효하지 않습니다.')
+        }
+
+        // 2. store 변경 시 감정 records 읽기
+        const applyState = () => {
+          if (!mounted) return
+          const records = store.getState().getRecentWeekRecords?.() ?? []
+          const unique = [...new Set(records.map((r) => r.emotion))]
+          setEmotions(unique)
+          setStatus(unique.length > 0 ? 'loading-books' : 'no-emotions')
+        }
+
+        // 3. 구독 먼저 등록 → Initializer가 store를 채울 때 applyState가 반응
+        unsubscribe = store.subscribe(applyState)
+        applyState()
+
+        // 4. EmotionStoreInitializer 로드 → 마운트하면 Firebase auth 기반으로 주문 조회 후 store 갱신
+        try {
+          const initModule = await import('mfeHost/EmotionStoreInitializer')
+          if (!mounted) return
+          const InitComp = initModule?.default
+          if (typeof InitComp === 'function') {
+            setInitializer(() => InitComp)
+          }
+        } catch (e) {
+          console.warn('[EmotionStoreInitializer] 로드 실패:', e)
+        }
+      } catch (err) {
+        if (!mounted) return
+        setError(err instanceof Error ? err.message : String(err))
+        setStatus('error')
+      }
+    })()
+
+    return () => {
+      mounted = false
+      unsubscribe?.()
+    }
+  }, [userid])
+
+  // 감정 데이터가 준비되면 책 추천 요청
+  useEffect(() => {
+    if (status !== 'loading-books' || emotions.length === 0) return
+
     getBookRecommendation(emotions)
-      .then((result) => setBooks(result))
-      .catch((err: Error) => setError(err.message))
-      .finally(() => setLoading(false))
-  }, [])
+      .then((result) => {
+        setBooks(result)
+        setStatus('done')
+      })
+      .catch((err: Error) => {
+        setError(err.message)
+        setStatus('error')
+      })
+  }, [status, emotions])
+
+  /* ── 접근 불가 ── */
+  if (status === 'no-access') {
+    return (
+      <div className="book-page">
+        <div className="access-denied">
+          <span className="access-denied-icon">🔒</span>
+          <h2>접근할 수 없습니다</h2>
+          <p>책 추천을 이용하려면 로그인이 필요합니다.</p>
+          {onBack && (
+            <button className="back-btn" onClick={onBack}>
+              ← 돌아가기
+            </button>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  /* ── 감정 없음 ── */
+  if (status === 'no-emotions') {
+    return (
+      <div className="book-page">
+        <div className="empty-state">
+          <span>😶</span>
+          <p>이번 주 감정 기록이 없습니다.</p>
+          <small>Booked by Feelings에서 감정을 기록하고 돌아오세요</small>
+          {onBack && (
+            <button className="back-btn" onClick={onBack}>
+              ← 돌아가기
+            </button>
+          )}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="book-page">
+      {/* EmotionStoreInitializer: invisible 컴포넌트, Firebase auth로 주문 조회 후 store 갱신 */}
+      {Initializer && <Initializer />}
+
       <header className="book-header">
         <div className="book-header-inner">
           {onBack && (
@@ -42,32 +166,32 @@ function BookRecommendation({ emotions = [], onBack }: BookRecommendationProps) 
               </div>
             </div>
           )}
-          <p className="book-subtitle">
-            {emotions.length > 0
-              ? 'Gemini가 감정에 꼭 맞는 책 3권을 골라드릴게요'
-              : '감정 데이터가 없습니다. 먼저 감정을 기록해주세요.'}
-          </p>
+          <p className="book-subtitle">Gemini가 감정에 꼭 맞는 책 3권을 골라드릴게요</p>
         </div>
       </header>
 
       <main className="book-main">
-        {loading && (
+        {(status === 'loading-store' || status === 'loading-books') && (
           <div className="loading-state">
             <div className="book-spinner" />
-            <p className="loading-text">Gemini가 당신을 위한 책을 고르는 중...</p>
+            <p className="loading-text">
+              {status === 'loading-store'
+                ? '감정 데이터를 불러오는 중...'
+                : 'Gemini가 당신을 위한 책을 고르는 중...'}
+            </p>
             <p className="loading-sub">잠시만 기다려주세요</p>
           </div>
         )}
 
-        {error && !loading && (
+        {status === 'error' && (
           <div className="error-state">
             <span className="error-icon">⚠️</span>
-            <p>책 추천 중 오류가 발생했습니다.</p>
+            <p>오류가 발생했습니다.</p>
             <small>{error}</small>
           </div>
         )}
 
-        {!loading && !error && books.length > 0 && (
+        {status === 'done' && books.length > 0 && (
           <>
             <p className="result-label">감정을 바탕으로 추천된 책이에요</p>
             <div className="books-grid">
@@ -110,14 +234,6 @@ function BookRecommendation({ emotions = [], onBack }: BookRecommendationProps) 
               ))}
             </div>
           </>
-        )}
-
-        {!loading && !error && books.length === 0 && emotions.length === 0 && (
-          <div className="empty-state">
-            <span>📚</span>
-            <p>감정 기록이 있어야 책을 추천해드릴 수 있어요</p>
-            <small>Booked by Feelings에서 감정을 기록하고 돌아오세요</small>
-          </div>
         )}
       </main>
     </div>

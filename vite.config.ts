@@ -3,9 +3,10 @@ import react from '@vitejs/plugin-react-swc'
 import federation from '@originjs/vite-plugin-federation'
 
 export default defineConfig(({ mode }) => {
-  loadEnv(mode, process.cwd(), '')
+  const env = loadEnv(mode, process.cwd(), '')
 
   return {
+    appType: 'mpa',
     plugins: [
       react(),
       federation({
@@ -13,6 +14,9 @@ export default defineConfig(({ mode }) => {
         filename: 'remoteEntry.js',
         exposes: {
           './BookRecommendation': './src/BookRecommendation',
+        },
+        remotes: {
+          mfeHost: `${env.VITE_MFE_HOST_URL || 'https://dusunax-001.web.app'}/assets/remoteEntry.js`,
         },
         shared: ['react', 'react-dom'],
       }),
@@ -22,6 +26,13 @@ export default defineConfig(({ mode }) => {
       target: 'esnext',
       minify: false,
       cssCodeSplit: false,
+    },
+    preview: {
+      port: 3011,
+      strictPort: true,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+      },
     },
   }
 })

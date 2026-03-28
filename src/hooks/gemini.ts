@@ -16,6 +16,8 @@ export async function getBookRecommendation(
   emotions: string[],
 ): Promise<Book[]> {
   const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+
+  console.log("apiKey", apiKey);
   if (!apiKey) {
     throw new Error("VITE_GEMINI_API_KEY가 설정되지 않았습니다.");
   }

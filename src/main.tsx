@@ -4,6 +4,6 @@ import BookRecommendation from './BookRecommendation'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <BookRecommendation emotions={['기쁨', '설렘']} />
+    <BookRecommendation userid={new URLSearchParams(window.location.search).get('userid')} />
   </StrictMode>,
 )
