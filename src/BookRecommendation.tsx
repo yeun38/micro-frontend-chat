@@ -111,16 +111,28 @@ function BookRecommendation({ userId, emotions: initialEmotions = [], onBack }: 
   if (status === 'no-access') {
     return (
       <div className="book-page">
-        <div className="access-denied">
-          <span className="access-denied-icon">🔒</span>
-          <h2>접근할 수 없습니다</h2>
-          <p>책 추천을 이용하려면 로그인이 필요합니다.</p>
-          {onBack && (
-            <button className="back-btn" onClick={onBack}>
-              ← 돌아가기
-            </button>
-          )}
-        </div>
+        <header className="book-header">
+          <div className="book-header-inner">
+            {onBack && (
+              <button className="back-btn" onClick={onBack}>
+                ← 돌아가기
+              </button>
+            )}
+            <h1 className="book-heading">나를 위한 책 찾기</h1>
+          </div>
+        </header>
+        <main className="book-main">
+          <div className="no-access-state">
+            <div className="no-access-icon">!</div>
+            <p className="no-access-title">오류가 발생하였습니다</p>
+            <p className="no-access-desc">다시 시도해주세요</p>
+            {onBack && (
+              <button className="no-access-btn" onClick={onBack}>
+                돌아가기
+              </button>
+            )}
+          </div>
+        </main>
       </div>
     )
   }
