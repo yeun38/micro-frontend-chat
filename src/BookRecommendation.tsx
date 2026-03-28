@@ -97,10 +97,9 @@ function BookRecommendation({ userId, emotions: initialEmotions = [] }: BookReco
       })
   }, [status, emotions])
 
-  return (
-    <div className="book-page">
-      {/* ── 접근 불가 ── */}
-      {status === 'no-access' && (
+  if (status === 'no-access') {
+    return (
+      <div className="book-page">
         <main className="book-main">
           <div className="no-access-state">
             <div className="no-access-icon">!</div>
@@ -111,10 +110,13 @@ function BookRecommendation({ userId, emotions: initialEmotions = [] }: BookReco
             </a>
           </div>
         </main>
-      )}
+      </div>
+    )
+  }
 
-      {/* ── 감정 없음 ── */}
-      {status === 'no-emotions' && (
+  if (status === 'no-emotions') {
+    return (
+      <div className="book-page">
         <div className="empty-state">
           <span>😶</span>
           <p>이번 주 감정 기록이 없습니다.</p>
@@ -123,8 +125,12 @@ function BookRecommendation({ userId, emotions: initialEmotions = [] }: BookReco
             ← 돌아가기
           </a>
         </div>
-      )}
+      </div>
+    )
+  }
 
+  return (
+    <div className="book-page">
       <header className="book-header">
         <div className="book-header-inner">
           <a className="back-btn" href="https://dusunax-001.web.app/">
