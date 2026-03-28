@@ -107,10 +107,13 @@ function BookRecommendation({ userId, emotions: initialEmotions = [], onBack }: 
       })
   }, [status, emotions])
 
-  /* ── 접근 불가 ── */
-  if (status === 'no-access') {
-    return (
-      <div className="book-page">
+  return (
+    <div className="book-page">
+      {/* EmotionStoreInitializer: invisible 컴포넌트, Firebase auth로 주문 조회 후 store 갱신 — 항상 렌더 */}
+      {Initializer && <Initializer />}
+
+      {/* ── 접근 불가 ── */}
+      {status === 'no-access' && (
         <main className="book-main">
           <div className="no-access-state">
             <div className="no-access-icon">!</div>
@@ -121,14 +124,10 @@ function BookRecommendation({ userId, emotions: initialEmotions = [], onBack }: 
             </a>
           </div>
         </main>
-      </div>
-    )
-  }
+      )}
 
-  /* ── 감정 없음 ── */
-  if (status === 'no-emotions') {
-    return (
-      <div className="book-page">
+      {/* ── 감정 없음 ── */}
+      {status === 'no-emotions' && (
         <div className="empty-state">
           <span>😶</span>
           <p>이번 주 감정 기록이 없습니다.</p>
@@ -139,14 +138,7 @@ function BookRecommendation({ userId, emotions: initialEmotions = [], onBack }: 
             </button>
           )}
         </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="book-page">
-      {/* EmotionStoreInitializer: invisible 컴포넌트, Firebase auth로 주문 조회 후 store 갱신 */}
-      {Initializer && <Initializer />}
+      )}
 
       <header className="book-header">
         <div className="book-header-inner">
