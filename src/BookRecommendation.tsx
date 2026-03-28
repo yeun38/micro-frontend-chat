@@ -117,7 +117,7 @@ function BookRecommendation({ userId, emotions: initialEmotions = [], onBack }: 
             <p className="no-access-title">오류가 발생하였습니다</p>
             <p className="no-access-desc">다시 시도해주세요</p>
             <a className="no-access-btn" href="https://dusunax-001.web.app/">
-              다시 시도해주세요
+              뒤로가기
             </a>
           </div>
         </main>
