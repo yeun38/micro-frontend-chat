@@ -17,6 +17,7 @@ export default defineConfig(({ mode }) => {
         },
         remotes: {
           mfeHost: `${env.VITE_MFE_HOST_URL || 'https://dusunax-001.web.app'}/assets/remoteEntry.js`,
+          auth: `${env.VITE_AUTH_URL || 'https://auth-dusunax-001.web.app'}/assets/remoteEntry.js`,
         },
         shared: ['react', 'react-dom'],
       }),

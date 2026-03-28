@@ -63,7 +63,8 @@ function BookRecommendation({ userId, emotions: initialEmotions = [], onBack }: 
         unsubscribe = store.subscribe(applyState)
 
         // userId로 직접 주문 조회 → 감정 records 갱신 (Firebase auth 불필요)
-        const { getRecentOrders, setEmotionRecordsFromOrders } = store.getState()
+        const { getRecentOrders } = await import('auth/services/orderService')
+        const { setEmotionRecordsFromOrders } = store.getState()
         const orders = await getRecentOrders(userId, 50)
         if (!mounted) return
 

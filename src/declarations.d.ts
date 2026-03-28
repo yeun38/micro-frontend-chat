@@ -22,3 +22,11 @@ declare module 'mfeHost/EmotionStoreInitializer' {
   const EmotionStoreInitializer: React.ComponentType
   export default EmotionStoreInitializer
 }
+
+declare module 'auth/services/orderService' {
+  interface Order {
+    id: string
+    [key: string]: unknown
+  }
+  export function getRecentOrders(userId: string, count?: number): Promise<Order[]>
+}
