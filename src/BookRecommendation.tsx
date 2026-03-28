@@ -5,7 +5,6 @@ import './BookRecommendation.css'
 interface BookRecommendationProps {
   userId?: string | null
   emotions?: string[]
-  onBack?: () => void
 }
 
 type Status =
@@ -16,7 +15,7 @@ type Status =
   | 'done'
   | 'error'
 
-function BookRecommendation({ userId, emotions: initialEmotions = [], onBack }: BookRecommendationProps) {
+function BookRecommendation({ userId, emotions: initialEmotions = [] }: BookRecommendationProps) {
   const hasEmotions = initialEmotions.length > 0
   const [status, setStatus] = useState<Status>(() => {
     if (!userId) return 'no-access'
@@ -120,21 +119,17 @@ function BookRecommendation({ userId, emotions: initialEmotions = [], onBack }: 
           <span>😶</span>
           <p>이번 주 감정 기록이 없습니다.</p>
           <small>Booked by Feelings에서 감정을 기록하고 돌아오세요</small>
-          {onBack && (
-            <button className="back-btn" onClick={onBack}>
-              ← 돌아가기
-            </button>
-          )}
+          <a className="back-btn" href="https://dusunax-001.web.app/">
+            ← 돌아가기
+          </a>
         </div>
       )}
 
       <header className="book-header">
         <div className="book-header-inner">
-          {onBack && (
-            <button className="back-btn" onClick={onBack}>
-              ← 돌아가기
-            </button>
-          )}
+          <a className="back-btn" href="https://dusunax-001.web.app/">
+            ← 돌아가기
+          </a>
           <h1 className="book-heading">나를 위한 책 찾기</h1>
           {emotions.length > 0 && (
             <div className="emotion-row">
