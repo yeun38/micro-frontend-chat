@@ -27,14 +27,11 @@ function BookRecommendation({ userId, emotions: initialEmotions = [], onBack }: 
   const [books, setBooks] = useState<Book[]>([])
   const [error, setError] = useState<string | null>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [Initializer, setInitializer] = useState<React.ComponentType<any> | null>(null)
-
   useEffect(() => {
     if (!userId) {
       setStatus('no-access')
       return
     }
-    // shell에서 emotions를 이미 전달받은 경우 store 로딩 불필요
     if (hasEmotions) return
 
     let mounted = true
@@ -42,7 +39,6 @@ function BookRecommendation({ userId, emotions: initialEmotions = [], onBack }: 
 
     ;(async () => {
       try {
-        // 1. store import 및 유효성 검사
         const module = await import('mfeHost/sharedEmotionStore')
         if (!mounted) return
 
@@ -55,7 +51,6 @@ function BookRecommendation({ userId, emotions: initialEmotions = [], onBack }: 
           throw new Error('sharedEmotionStore가 유효하지 않습니다.')
         }
 
-        // 2. store 변경 시 감정 records 읽기
         const applyState = () => {
           if (!mounted) return
           const records = store.getState().getRecentWeekRecords?.() ?? []
@@ -64,21 +59,16 @@ function BookRecommendation({ userId, emotions: initialEmotions = [], onBack }: 
           setStatus(unique.length > 0 ? 'loading-books' : 'no-emotions')
         }
 
-        // 3. 구독 먼저 등록 → Initializer가 store를 채울 때 applyState가 반응
+        // 구독 먼저 등록 → setEmotionRecordsFromOrders 호출 시 applyState 반응
         unsubscribe = store.subscribe(applyState)
-        applyState()
 
-        // 4. EmotionStoreInitializer 로드 → 마운트하면 Firebase auth 기반으로 주문 조회 후 store 갱신
-        try {
-          const initModule = await import('mfeHost/EmotionStoreInitializer')
-          if (!mounted) return
-          const InitComp = initModule?.default
-          if (typeof InitComp === 'function') {
-            setInitializer(() => InitComp)
-          }
-        } catch (e) {
-          console.warn('[EmotionStoreInitializer] 로드 실패:', e)
-        }
+        // userId로 직접 주문 조회 → 감정 records 갱신 (Firebase auth 불필요)
+        const { getRecentOrders, setEmotionRecordsFromOrders } = store.getState()
+        const orders = await getRecentOrders(userId, 50)
+        if (!mounted) return
+
+        setEmotionRecordsFromOrders(orders)
+        applyState()
       } catch (err) {
         if (!mounted) return
         setError(err instanceof Error ? err.message : String(err))
@@ -109,9 +99,6 @@ function BookRecommendation({ userId, emotions: initialEmotions = [], onBack }: 
 
   return (
     <div className="book-page">
-      {/* EmotionStoreInitializer: invisible 컴포넌트, Firebase auth로 주문 조회 후 store 갱신 — 항상 렌더 */}
-      {Initializer && <Initializer />}
-
       {/* ── 접근 불가 ── */}
       {status === 'no-access' && (
         <main className="book-main">
